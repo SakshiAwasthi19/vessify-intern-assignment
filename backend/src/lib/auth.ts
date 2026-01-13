@@ -1,0 +1,66 @@
+// ============================================
+// BETTER AUTH CONFIGURATION
+// Email + Password Authentication
+// JWT Tokens (7-day expiry)
+// Organizations/Teams (Multi-tenancy)
+// ============================================
+
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import { PrismaClient } from "@prisma/client";
+import { organization } from "better-auth/plugins";
+
+// Initialize Prisma Client
+const prisma = new PrismaClient();
+
+// Configure Better Auth
+export const auth = betterAuth({
+  adapter: prismaAdapter(prisma, {
+    provider: "postgresql",
+  }),
+
+  // Email + Password Authentication
+  emailAndPassword: {
+    enabled: true,
+  },
+
+  // JWT Configuration
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days in seconds (604800)
+    updateAge: 60 * 60 * 24, // Update session every 24 hours
+  },
+
+  // Organizations/Teams Plugin (Multi-tenancy)
+  plugins: [
+    organization({
+      allowUserToCreateOrganization: true,
+      defaultOrganizationName: "Personal",
+    }),
+  ],
+
+  // ⚠️ CRITICAL FIX: Trusted Origins for CORS
+  trustedOrigins: [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    process.env.FRONTEND_URL || "http://localhost:3000",
+  ],
+
+  // Cookie configuration for localhost development
+  advanced: {
+    cookiePrefix: "",
+    generateId: undefined, // Use default
+  },
+
+  // Secret Key
+  secret: process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET,
+  
+  // Base URL
+  baseURL: process.env.BACKEND_URL || "http://localhost:3001",
+  
+  // Base Path
+  basePath: "/api/auth",
+});
+
+// Export types
+export type Session = typeof auth.$Infer.Session;
+export type User = typeof auth.$Infer.Session.user;

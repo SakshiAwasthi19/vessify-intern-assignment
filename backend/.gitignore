@@ -1,0 +1,9 @@
+cd backend
+cat > .gitignore << 'EOF'
+node_modules/
+.env
+dist/
+*.log
+prisma/*.db
+EOF
+cd ..
