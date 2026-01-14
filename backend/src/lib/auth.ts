@@ -7,11 +7,8 @@
 
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { PrismaClient } from "@prisma/client";
-import { organization } from "better-auth/plugins";
-
-// Initialize Prisma Client
-const prisma = new PrismaClient();
+import { organization, jwt } from "better-auth/plugins";
+import { prisma } from "./db"; // Use the shared Prisma client instance
 
 // Configure Better Auth
 export const auth = betterAuth({
@@ -31,11 +28,13 @@ export const auth = betterAuth({
   },
 
   // Organizations/Teams Plugin (Multi-tenancy)
+  // JWT Plugin (for JWT token generation)
   plugins: [
     organization({
       allowUserToCreateOrganization: true,
       defaultOrganizationName: "Personal",
     }),
+    jwt(), // Enable JWT token generation
   ],
 
   // ⚠️ CRITICAL FIX: Trusted Origins for CORS

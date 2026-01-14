@@ -1,260 +1,184 @@
-cat > README.md << 'EOF'
-# Vessify Internship Assignment - Personal Finance Transaction Extractor
+# Vessify Internship Assignment - Transaction Extractor
 
-## 🎯 Project Overview
+A robust full-stack application for parsing and managing financial transactions from bank statements. Built with modern web technologies, this project demonstrates a secure, high-performance architecture for data extraction and financial tracking.
 
-A secure personal finance web application that extracts structured transaction data from raw bank statement text with multi-tenancy support and strict data isolation.
-
-## 🛠️ Tech Stack
-
-### Backend
-- **Framework:** Hono (TypeScript)
-- **Database:** PostgreSQL + Prisma ORM
-- **Authentication:** Better Auth (JWT with 7-day expiry)
-- **Testing:** Jest
+## 🚀 Tech Stack
 
 ### Frontend
-- **Framework:** Next.js 15 (App Router)
-- **UI Library:** shadcn/ui + Tailwind CSS
-- **Authentication:** Better Auth React Client
+- **Framework:** [Next.js 15](https://nextjs.org/) (App Router)
+- **Library:** [React 19](https://react.dev/)
+- **Styling:** [Tailwind CSS 4](https://tailwindcss.com/)
+- **UI Components:** [Shadcn UI](https://ui.shadcn.com/)
+- **Forms:** React Hook Form + Zod
+- **Icons:** Lucide React
 
-## ✨ Features
+### Backend
+- **Framework:** [Hono](https://hono.dev/) (Lightweight, Edge-ready)
+- **Runtime:** Node.js (with TSX)
+- **Database Helper:** [Prisma ORM](https://www.prisma.io/)
+- **Database:** PostgreSQL
+- **Authentication:** [Better Auth](https://better-auth.com/)
+- **Testing:** Jest + Supertest
 
-- ✅ Email + password authentication with JWT tokens
-- ✅ Multi-tenancy using organizations/teams
-- ✅ Transaction parser supporting 3 different bank statement formats
-- ✅ Strict data isolation (users can only see their own transactions)
-- ✅ Cursor-based pagination
-- ✅ Protected API routes with middleware
-- ✅ Comprehensive testing suite
+## ✨ Features Implemented
 
-## 📦 Project Structure
-```
-vessify-intern-assignment/
-├── backend/
-│   ├── prisma/
-│   │   └── schema.prisma
-│   ├── src/
-│   │   ├── lib/
-│   │   │   ├── auth.ts          # Better Auth configuration
-│   │   │   ├── db.ts            # Prisma client
-│   │   │   └── parser.ts        # Transaction parser
-│   │   ├── middleware/
-│   │   │   └── auth.ts          # JWT verification middleware
-│   │   ├── routes/
-│   │   │   └── transactions.routes.ts
-│   │   └── index.ts             # Server entry point
-│   ├── tests/
-│   ├── .env.example
-│   └── package.json
-├── frontend/
-│   ├── app/
-│   ├── components/
-│   ├── lib/
-│   ├── .env.local.example
-│   └── package.json
-└── README.md
-```
+1.  **Secure Authentication**
+    *   Email/Password Registration & Login
+    *   JWT-based session management
+    *   Secure token handling (HTTP-only cookies & headers)
+    *   Organization/Workspace support (via Better Auth plugins)
 
-## 🚀 Setup Instructions
+2.  **Transaction Parsing Engine**
+    *   Extracts structured data from raw bank statement text
+    *   Regex-based parsing for Dates, Descriptions, Amounts, and Balances
+    *   Robust error handling for malformed input
+
+3.  **Interactive Dashboard**
+    *   Real-time transaction extraction
+    *   Cursor-based pagination (Infinite scroll/Load more)
+    *   Responsive data table with currency formatting
+    *   Transaction history view
+
+## 🛠️ Setup Instructions
 
 ### Prerequisites
-- Node.js v20+
-- PostgreSQL 16+
+- Node.js (v18+)
 - npm or pnpm
+- PostgreSQL Database
+- VS Code (Recommended)
 
-### 1. Clone Repository
+### 1. Clone & Install
 ```bash
 git clone <repository-url>
 cd vessify-intern-assignment
-```
 
-### 2. Install Dependencies
-```bash
-# Install root dependencies
-npm install
-
-# Install backend dependencies
+# Install Backend Dependencies
 cd backend
 npm install
 
-# Install frontend dependencies
+# Install Frontend Dependencies
 cd ../frontend
 npm install
 ```
 
-### 3. Database Setup
-```bash
-# Create PostgreSQL database
-createdb vessify_db
+### 2. Database Setup
+Ensure your PostgreSQL server is running. Then configure the backend:
 
-# Or using psql
-psql -U postgres -c "CREATE DATABASE vessify_db;"
-```
-
-### 4. Environment Variables
-
-**Backend (.env):**
 ```bash
 cd backend
-cp .env.example .env
-# Edit .env with your values
+# Create .env file (see Environment Variables section)
+# Run migrations
+npx prisma migrate dev --name init
 ```
 
-**Frontend (.env.local):**
-```bash
-cd frontend
-cp .env.local.example .env.local
-# Edit .env.local with your values
-```
+### 3. Running the App
+You need to run both frontend and backend concurrently.
 
-**Generate secret key:**
+**Backend (Port 3001)**
 ```bash
-openssl rand -base64 32
-```
-
-### 5. Run Migrations
-```bash
-cd backend
-npm run prisma:generate
-npm run prisma:migrate
-```
-
-### 6. Start Development Servers
-
-**Option A: Run both simultaneously (from root):**
-```bash
-npm run dev
-```
-
-**Option B: Run separately:**
-```bash
-# Terminal 1: Backend
 cd backend
 npm run dev
+```
 
-# Terminal 2: Frontend
+**Frontend (Port 3000)**
+```bash
 cd frontend
 npm run dev
 ```
 
-### 7. Access Application
-- **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:3001
-- **Prisma Studio:** `npm run prisma:studio` (in backend/)
+Visit `http://localhost:3000` to access the application.
 
-## 🧪 Testing
+## 🔐 Environment Variables
+
+Create a `.env` file in the `backend` directory:
+
+```env
+# backend/.env
+DATABASE_URL="postgresql://user:password@localhost:5432/vessify_db?schema=public"
+BETTER_AUTH_SECRET="your_very_long_random_secret_string"
+BETTER_AUTH_URL="http://localhost:3001" 
+```
+
+Create a `.env.local` file in the `frontend` directory:
+
+```env
+# frontend/.env.local
+NEXT_PUBLIC_BACKEND_URL="http://localhost:3001"
+```
+
+## 👥 Test User Credentials
+
+You can use these credentials to log in or register new users on the platform.
+
+| Role | Email | Password |
+|------|-------|----------|
+| **User 1** | `demo@example.com` | `password123` |
+| **User 2** | `test@vessify.com` | `securePass!789` |
+
+## 📡 API Endpoints Documentation
+
+### Authentication (`/api/auth/*`)
+*   `POST /sign-up/email`: Register a new user
+*   `POST /sign-in/email`: Log in with email/password
+*   `GET /session`: Get current user session
+*   `GET /token`: Retrieve current JWT token
+*   `POST /sign-out`: Logout
+
+### Transactions (`/api/transactions`)
+*   `GET /`: List transactions (Cursor pagination supported)
+    *   Query Params: `cursor` (optional), `limit` (default 10)
+*   `POST /extract`: Parse and save raw transaction text
+    *   Body: `{ "text": "Raw bank statement string..." }`
+
+## 🧪 Testing Instructions
+
+The project includes unit and integration tests for the backend.
+
 ```bash
+cd backend
+
 # Run all tests
-cd backend
 npm test
 
 # Run tests in watch mode
 npm run test:watch
 
-# Run with coverage
+# Generate coverage report
 npm run test:coverage
 ```
 
-## 👤 Test User Credentials
+**Key Test Files:**
+*   `backend/tests/parser.test.ts`: Validates regex parsing logic
+*   `backend/tests/isolation.test.ts`: Tests transaction list API response structure
 
-**User 1:**
-- Email: `test1@example.com`
-- Password: `SecurePass123!`
+## 📂 Project Structure
 
-**User 2:**
-- Email: `test2@example.com`
-- Password: `SecurePass123!`
-
-## 📝 API Endpoints
-
-### Authentication
-- `POST /api/auth/sign-up/email` - Register new user
-- `POST /api/auth/sign-in/email` - Login user
-- `GET /api/auth/get-session` - Get current session
-
-### Transactions (Protected)
-- `POST /api/transactions/extract` - Parse and save transaction
-- `GET /api/transactions` - Get paginated transactions
-- `GET /api/transactions/:id` - Get single transaction
-- `DELETE /api/transactions/:id` - Delete transaction
-
-## 🔧 Transaction Parser Formats
-
-The parser supports 3 different bank statement formats:
-
-**Format 1 (Clean):**
 ```
-Date: 11 Dec 2025
-Description: STARBUCKS COFFEE MUMBAI
-Amount: -420.00
-Balance after transaction: 18,420.50
+.
+├── backend/
+│   ├── prisma/             # Database schema & migrations
+│   ├── src/
+│   │   ├── lib/            # Shared utilities (Auth, DB, Parser)
+│   │   ├── middleware/     # Auth middleware
+│   │   ├── routes/         # API Route definitions
+│   │   └── index.ts        # App entry point
+│   └── tests/              # Jest test suites
+│
+├── frontend/
+│   ├── src/
+│   │   ├── app/            # Next.js App Router pages
+│   │   ├── components/     # Reusable UI components
+│   │   └── lib/            # API client & helpers
+│   └── public/             # Static assets
+│
+└── README.md
 ```
 
-**Format 2 (Inline):**
-```
-Uber Ride * Airport Drop
-12/11/2025 → ₹1,250.00 debited
-Available Balance → ₹17,170.50
-```
+## 📸 Screenshots
 
-**Format 3 (Compact):**
-```
-txn123 2025-12-10 Amazon.in Order #403-1234567-8901234 ₹2,999.00 Dr Bal 14171.50 Shopping
-```
+| Dashboard View | Transaction Parsing |
+|:---:|:---:|
+| ![Dashboard Mockup](https://placehold.co/600x400?text=Dashboard+View) | ![Parsing Demo](https://placehold.co/600x400?text=Parsing+Result) |
 
-## 🛡️ Security Features
-
-- Password hashing with bcrypt (via Better Auth)
-- JWT tokens with 7-day expiry
-- Data isolation by userId + organizationId
-- Protected routes with middleware
-- CORS configuration
-- SQL injection prevention (Prisma)
-
-## 📊 Database Schema
-
-See `backend/prisma/schema.prisma` for complete schema.
-
-**Key Models:**
-- User (email, password, organizations)
-- Organization (name, slug)
-- OrganizationMember (links users to organizations)
-- Transaction (date, description, amount, balance)
-
-## 🎨 Frontend Pages
-
-- `/login` - User login
-- `/register` - User registration
-- `/` - Dashboard (protected, shows transactions)
-
-## 🚀 Deployment
-
-### Backend (Railway/Render)
-```bash
-# Set environment variables on hosting platform
-# Deploy backend/ folder
-```
-
-### Frontend (Vercel)
-```bash
-# Set environment variables on Vercel
-# Deploy frontend/ folder
-```
-
-## 📄 License
-
-This is an internship assignment project.
-
-## 👨‍💻 Author
-
-[Your Name]
-[Your Email]
-
-## 🙏 Acknowledgments
-
-- Vessify team for the opportunity
-- Better Auth for authentication
-- Hono for the backend framework
-- Next.js team for the frontend framework
-EOF
+---
+*Built for Vessify Internship Assignment*

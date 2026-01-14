@@ -32,7 +32,15 @@ export function parseTransaction(text: string): ParsedTransaction {
   // Description: STARBUCKS COFFEE MUMBAI
   // Amount: -420.00
   // Balance after transaction: 18,420.50
-  if (normalized.match(/^Date:\s*/i)) {
+  if (normalized.match(/Date:/i)) {
+    // Check if it's a single line format
+    if (lines.length === 1 || !normalized.includes('\n')) {
+      try {
+        return parseFormat1SingleLine(normalized);
+      } catch (e) {
+        // If single line parse fails, fall back to multi-line (lines array)
+      }
+    }
     return parseFormat1(lines);
   }
 
@@ -103,6 +111,44 @@ function parseFormat1(lines: string[]): ParsedTransaction {
   }
 
   return { date, description, amount, balance };
+}
+
+/**
+ * Format 1 (Single Line): Clean format with labels all on one line
+ * Example: Date: 11 Dec 2025 Description: STARBUCKS COFFEE MUMBAI Amount: -420.00 Balance after transaction: 18,420.50
+ */
+function parseFormat1SingleLine(text: string): ParsedTransaction {
+  // Extract using capturing groups - more robust patterns
+  // Match Date until Description (ignoring case)
+  const dateMatch = text.match(/Date:\s*(.+?)\s*Description:/i);
+  // Match Description until Amount
+  const descMatch = text.match(/Description:\s*(.+?)\s*Amount:/i);
+  // Match Amount until Balance
+  const amountMatch = text.match(/Amount:\s*(.+?)\s*Balance/i);
+  // Match Balance: look for "Balance" then any text until the last number-like sequence
+  const balanceMatch = text.match(/Balance.*:\s*([₹\d,.-]+)\s*$/i);
+
+  if (!dateMatch || !descMatch || !amountMatch || !balanceMatch) {
+    // Try fallback for Balance without colon if user forgot it or OCR missed it
+    // e.g. "Balance aner transaction 18,420.50"
+    const balanceFallback = text.match(/Balance.*?\s+([₹\d,.-]+)\s*$/i);
+    if (dateMatch && descMatch && amountMatch && balanceFallback) {
+      return {
+        date: parseDate(dateMatch[1].trim()),
+        description: descMatch[1].trim(),
+        amount: parseAmount(amountMatch[1].trim()),
+        balance: parseBalance(balanceFallback[1].trim())
+      };
+    }
+    throw new Error("Failed to parse single-line Format 1");
+  }
+
+  return {
+    date: parseDate(dateMatch[1].trim()),
+    description: descMatch[1].trim(),
+    amount: parseAmount(amountMatch[1].trim()),
+    balance: parseBalance(balanceMatch[1].trim())
+  };
 }
 
 /**
@@ -256,13 +302,13 @@ function parseDate(dateStr: string): Date {
 function parseAmount(amountStr: string, isDebit: boolean = false): number {
   // Remove rupee symbol, commas, and whitespace
   let cleaned = amountStr.replace(/[₹,\s]/g, '');
-  
+
   // Check if already negative
   const isNegative = cleaned.startsWith('-');
-  
+
   // Parse as float
   let amount = parseFloat(cleaned);
-  
+
   if (isNaN(amount)) {
     throw new Error(`Failed to parse amount: ${amountStr}`);
   }
@@ -284,7 +330,7 @@ function parseBalance(balanceStr: string): number {
   // Remove rupee symbol, commas, and whitespace
   const cleaned = balanceStr.replace(/[₹,\s]/g, '');
   const balance = parseFloat(cleaned);
-  
+
   if (isNaN(balance)) {
     throw new Error(`Failed to parse balance: ${balanceStr}`);
   }
@@ -299,10 +345,10 @@ function parseBalance(balanceStr: string): number {
 export function parseMultipleTransactions(text: string): ParsedTransaction[] {
   // Split by double newlines or transaction markers
   const transactions: ParsedTransaction[] = [];
-  
+
   // Try to split by common patterns
   const blocks = text.split(/\n\s*\n/).filter(block => block.trim().length > 0);
-  
+
   for (const block of blocks) {
     try {
       const transaction = parseTransaction(block);
