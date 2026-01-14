@@ -178,7 +178,7 @@ npm run test:coverage
 
 | Dashboard View | Transaction Parsing |
 |:---:|:---:|
-| ![Dashboard Mockup](https://placehold.co/600x400?text=Dashboard+View) | ![Parsing Demo](https://placehold.co/600x400?text=Parsing+Result) |
+| ![Dashboard Mockup](assets/dashboard.png) | ![Parsing Demo](assets/parsing.png) |
 
 ---
 *Built for Vessify Internship Assignment*
