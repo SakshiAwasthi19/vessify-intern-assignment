@@ -56,6 +56,7 @@ export const auth = betterAuth({
     // ⚠️ CRITICAL FIX: Trusted Origins for CORS
     trustedOrigins: [
         "https://vessify-frontend.vercel.app",
+        "https://vessify-frontend.vercel.app/",
         "http://localhost:3000",
         "http://localhost:3001",
     ],
