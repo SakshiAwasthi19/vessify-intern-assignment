@@ -24,9 +24,8 @@ app.use("*", async (c, next) => {
   }
 
   // 2. Add headers to regular responses
-  // Use c.res.headers.set to ensure they are present even if downstream modifies the response
-  c.res.headers.set("Access-Control-Allow-Origin", origin);
-  c.res.headers.set("Access-Control-Allow-Credentials", "true");
+  c.header("Access-Control-Allow-Origin", origin);
+  c.header("Access-Control-Allow-Credentials", "true");
 
   await next();
 });
