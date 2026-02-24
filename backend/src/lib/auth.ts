@@ -70,7 +70,7 @@ export const auth = betterAuth({
     secret: process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET,
 
     // Base URL
-    baseURL: process.env.BACKEND_URL || "http://localhost:3001",
+    baseURL: process.env.BACKEND_URL || "https://vessify-backend-9o4i.onrender.com",
 
     // Base Path
     basePath: "/api/auth",
