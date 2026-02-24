@@ -7,7 +7,10 @@ import authRoutes from "./routes/auth.routes";
 
 export const app = new Hono();
 
-// 1. CLEAN & CORRECT CORS (User Recommended)
+// VERSION FOR VERIFICATION
+const VERSION = "1.0.8-FINAL-ROUTING-FIX";
+
+// 1. CLEAN & CORRECT CORS
 app.use(
   "*",
   cors({
@@ -24,19 +27,19 @@ app.use(
   })
 );
 
-// 2. ROOT & HEALTH (Diagnostic)
+// 2. DIAGNOSTICS (Must be high up)
 app.get("/", (c) =>
   c.json({
     message: "Vessify Backend API",
     status: "running",
-    version: "1.0.7-clean-cors",
+    version: VERSION,
   })
 );
 
 app.get("/health", (c) =>
   c.json({
     status: "ok",
-    version: "1.0.7-clean-cors",
+    version: VERSION,
     timestamp: new Date().toISOString(),
   })
 );
@@ -45,13 +48,14 @@ app.get("/health", (c) =>
 // Custom JWT auth routes (like /api/token)
 app.route("/api/auth", authRoutes);
 
-// Better Auth catch-all (Must be after specific authRoutes to avoid conflicts)
+// Better Auth catch-all (Must be after specific authRoutes)
 app.all("/api/auth/*", async (c) => {
   try {
+    console.log(`[AUTH] ${c.req.method} ${c.req.url}`);
     const res = await auth.handler(c.req.raw);
     return res;
   } catch (error) {
-    console.error("[Auth Error]", error);
+    console.error("[AUTH ERROR]", error);
     return c.json({ error: "Authentication error", details: String(error) }, 500);
   }
 });
@@ -59,8 +63,8 @@ app.all("/api/auth/*", async (c) => {
 // 4. BUSINESS ROUTES
 app.route("/api/transactions", transactionRoutes);
 
-// 5. 404 HANDLER (To verify if routes aren't matching)
+// 5. 404 HANDLER
 app.notFound((c) => {
-  console.log(`[404] No route found for: ${c.req.method} ${c.req.url}`);
-  return c.json({ error: "Not Found", path: c.req.path }, 404);
+  console.log(`[404] No route for ${c.req.method} ${c.req.url}`);
+  return c.json({ error: "Route not found", path: c.req.path }, 404);
 });
