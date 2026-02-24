@@ -133,7 +133,7 @@ export async function authMiddleware(c: Context, next: Next) {
 
       try {
         // Create user and organization in a single transaction
-        const result = await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx: any) => {
           // Create user
           console.log("📝 Creating user in database...");
           const newUser = await tx.user.create({
@@ -236,7 +236,7 @@ export async function authMiddleware(c: Context, next: Next) {
 
       try {
         // Use a transaction to ensure atomicity
-        const result = await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx: any) => {
           // 1. Ensure User Exists (Double Check inside Transaction)
           let txUser = await tx.user.findUnique({ where: { id: userId } });
 
