@@ -87,14 +87,37 @@ app.get("/health", (c) =>
 app.route("/api/auth", authRoutes);
 
 app.all("/api/auth/*", async (c) => {
+  const origin = c.req.header("Origin") || "https://vessify-frontend.vercel.app";
+
+  // 1. Manually handle preflight OPTIONS requests for /api/auth/*
+  if (c.req.method === "OPTIONS") {
+    return c.text("", 204 as any, {
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Better-Auth, X-Better-Auth-Organization-Id",
+      "Access-Control-Allow-Credentials": "true",
+      "Access-Control-Max-Age": "86400",
+    });
+  }
+
   try {
     console.log(`[Auth Request] ${c.req.method} ${c.req.url}`);
-    console.log(`[Auth Headers] Content-Type: ${c.req.header("content-type")}`);
 
-    // Pass the raw request to Better Auth
-    // Pass the raw request to Better Auth
-    // Use clone() to prevent body locks if Hono touched it (though Hono shouldn't have)
-    return await auth.handler(c.req.raw);
+    // 2. Wrap the Better Auth handler to ensure CORS headers are preserved
+    const res = await auth.handler(c.req.raw);
+
+    // Create a new response with the same body and headers, but force CORS headers
+    const newHeaders = new Headers(res.headers);
+    newHeaders.set("Access-Control-Allow-Origin", origin);
+    newHeaders.set("Access-Control-Allow-Credentials", "true");
+    newHeaders.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    newHeaders.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-Better-Auth, X-Better-Auth-Organization-Id");
+
+    return new Response(res.body, {
+      status: res.status,
+      statusText: res.statusText,
+      headers: newHeaders,
+    });
   } catch (error) {
     console.error("Better Auth handler error details:", error);
     if (error instanceof Error) {
