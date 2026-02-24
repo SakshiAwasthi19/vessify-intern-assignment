@@ -10,18 +10,12 @@ export const app = new Hono();
 app.use(
   "*",
   cors({
-    origin: (origin) => {
-      const allowedOrigins = [
-        process.env.FRONTEND_URL,
-        "https://vessify-frontend.vercel.app",
-        "http://localhost:3000",
-      ].filter(Boolean) as string[];
-
-      if (!origin || origin.startsWith("http://localhost") || allowedOrigins.includes(origin)) {
-        return origin;
-      }
-      return allowedOrigins[0];
-    },
+    origin: [
+      "https://vessify-frontend.vercel.app",
+      "http://localhost:3000",
+      "http://localhost:3001",
+      process.env.FRONTEND_URL,
+    ].filter(Boolean) as string[],
     credentials: true,
   })
 );
