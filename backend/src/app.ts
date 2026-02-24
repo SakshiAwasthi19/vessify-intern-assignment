@@ -10,13 +10,27 @@ export const app = new Hono();
 app.use(
   "*",
   cors({
-    origin: [
-      "https://vessify-frontend.vercel.app",
-      "http://localhost:3000",
-      "http://localhost:3001",
-      process.env.FRONTEND_URL,
-    ].filter(Boolean) as string[],
+    // ⚠️ CRITICAL FIX: Trusted Origins for CORS
+    origin: (origin, c) => {
+      const trustedOrigins = [
+        "https://vessify-frontend.vercel.app",
+        "https://vessify-frontend.vercel.app/",
+        "http://localhost:3000",
+        "http://localhost:3001",
+        ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+      ];
+
+      if (origin && trustedOrigins.includes(origin)) {
+        console.log(`[CORS Request] Origin: ${origin} - ALLOWED`);
+        return origin;
+      }
+      console.log(`[CORS Request] Origin: ${origin} - BLOCKED`);
+      return null; // Block untrusted origins
+    },
     credentials: true,
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization", "X-Requested-With", "X-Better-Auth", "X-Better-Auth-Organization-Id"],
+    exposeHeaders: ["X-Better-Auth"],
   })
 );
 
