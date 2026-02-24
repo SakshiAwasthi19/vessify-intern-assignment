@@ -10,7 +10,14 @@ export const app = new Hono();
 app.use(
   "*",
   cors({
-    origin: "http://localhost:3000",
+    origin: (origin) => {
+      // Allow localhost for development
+      if (!origin || origin.startsWith("http://localhost")) return origin;
+      // Allow configured frontend URL
+      if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return origin;
+      // Fallback/Block others (or just return the env var)
+      return process.env.FRONTEND_URL || "http://localhost:3000";
+    },
     credentials: true,
   })
 );
@@ -35,10 +42,20 @@ app.route("/api/auth", authRoutes);
 
 app.all("/api/auth/*", async (c) => {
   try {
+    console.log(`[Auth Request] ${c.req.method} ${c.req.url}`);
+    console.log(`[Auth Headers] Content-Type: ${c.req.header("content-type")}`);
+
+    // Pass the raw request to Better Auth
+    // Pass the raw request to Better Auth
+    // Use clone() to prevent body locks if Hono touched it (though Hono shouldn't have)
     return await auth.handler(c.req.raw);
   } catch (error) {
-    console.error("Better Auth handler error:", error);
-    return c.json({ error: "Authentication error" }, 500);
+    console.error("Better Auth handler error details:", error);
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
+    return c.json({ error: "Authentication error", details: String(error) }, 500);
   }
 });
 

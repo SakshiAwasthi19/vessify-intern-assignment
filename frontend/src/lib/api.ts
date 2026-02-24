@@ -12,11 +12,16 @@ import { getToken } from "./auth";
 async function apiFetch(path: string, options: RequestInit = {}) {
   const token = getToken();
 
-  // Build headers - always include Content-Type, conditionally include Authorization
+  // Build headers - conditionally include Content-Type and Authorization
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     ...(options.headers as Record<string, string> || {}),
   };
+
+  // Only add Content-Type: application/json if method is not GET/HEAD
+  const method = options.method ? options.method.toUpperCase() : "GET";
+  if (method !== "GET" && method !== "HEAD" && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
 
   // Always attach Authorization header if token exists
   if (token) {

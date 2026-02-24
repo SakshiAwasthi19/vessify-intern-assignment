@@ -49,16 +49,16 @@ export default function LoginPage() {
       // We need to fetch it from the backend token endpoint
       // Wait a bit for session to be created in database
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       let token: string | null = null;
-      
+
       // Try to get JWT token from backend
       try {
         console.log("🔑 Fetching JWT token from backend...");
         const tokenRes = await authApi.getToken();
         console.log("🔍 Token response:", JSON.stringify(tokenRes, null, 2));
         token = tokenRes.token;
-        
+
         // Validate token is a JWT (should be long and contain dots)
         if (token && token.length > 50 && token.includes('.')) {
           console.log("✅ Valid JWT token received");
@@ -68,14 +68,14 @@ export default function LoginPage() {
       } catch (tokenErr: any) {
         console.error("❌ Failed to get token from backend:", tokenErr);
         // Try to extract from login response as last resort
-        token = 
-          res.token || 
-          res.session?.token || 
+        token =
+          res.token ||
+          res.session?.token ||
           res.data?.token ||
           res.data?.session?.token ||
           res.user?.session?.token ||
           null;
-        
+
         // Only use if it looks like a JWT (not a session ID)
         if (token && (token.length < 50 || !token.includes('.'))) {
           console.warn("⚠️ Token from login response doesn't look like a JWT, ignoring:", token.substring(0, 30));
