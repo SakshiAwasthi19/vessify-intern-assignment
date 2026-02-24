@@ -49,12 +49,6 @@
   ],
   "author": "",
   "license": "ISC",
-  "optionalDependencies": {
-    "lightningcss-linux-x64-gnu": "^1.27.0",
-    "lightningcss-win32-x64-msvc": "^1.27.0",
-    "@next/swc-linux-x64-gnu": "15.5.9",
-    "@next/swc-win32-x64-msvc": "15.5.9"
-  },
   "overrides": {
     "minimatch": "^10.2.1",
     "glob": "^11.0.0"
