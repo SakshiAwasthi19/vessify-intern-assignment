@@ -7,28 +7,22 @@ import { cors } from "hono/cors";
 
 export const app = new Hono();
 
-// ⚠️ NUCLEAR CORS FIX: Manual middleware to ensure headers are ALWAYS present
-app.use("*", async (c, next) => {
-  const origin = c.req.header("Origin") || "https://vessify-frontend.vercel.app";
-
-  // 1. Handle Preflight (OPTIONS)
-  if (c.req.method === "OPTIONS") {
-    console.log(`[CORS OPTIONS] Request from: ${origin}`);
-    return c.text("", 204 as any, {
-      "Access-Control-Allow-Origin": origin,
-      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Better-Auth, X-Better-Auth-Organization-Id",
-      "Access-Control-Allow-Credentials": "true",
-      "Access-Control-Max-Age": "86400",
-    });
-  }
-
-  // 2. Add headers to regular responses
-  c.header("Access-Control-Allow-Origin", origin);
-  c.header("Access-Control-Allow-Credentials", "true");
-
-  await next();
-});
+// ✅ CLEAN & CORRECT CORS
+app.use(
+  "*",
+  cors({
+    origin: "https://vessify-frontend.vercel.app",
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "X-Better-Auth",
+      "X-Better-Auth-Organization-Id",
+    ],
+    credentials: true,
+  })
+);
 
 app.get("/", (c) =>
   c.json({
@@ -50,20 +44,7 @@ app.route("/api/auth", authRoutes);
 
 app.all("/api/auth/*", async (c) => {
   try {
-    const res = await auth.handler(c.req.raw);
-
-    // Better Auth returns a RAW response. We wrap it to ensure CORS headers 
-    // set in our global middleware are preserved in the final output.
-    const origin = c.req.header("Origin") || "https://vessify-frontend.vercel.app";
-    const newHeaders = new Headers(res.headers);
-    newHeaders.set("Access-Control-Allow-Origin", origin);
-    newHeaders.set("Access-Control-Allow-Credentials", "true");
-
-    return new Response(res.body, {
-      status: res.status,
-      statusText: res.statusText,
-      headers: newHeaders,
-    });
+    return await auth.handler(c.req.raw);
   } catch (error) {
     return c.json({ error: "Authentication error", details: String(error) }, 500);
   }
