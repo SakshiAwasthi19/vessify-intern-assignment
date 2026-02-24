@@ -10,18 +10,60 @@ export const app = new Hono();
 app.use(
   "*",
   cors({
-    // ⚠️ CRITICAL FIX: Trusted Origins for CORS
-    // ⚠️ NUCLEAR FIX: Mirror any origin that asks
+    /**
+     * CORS configuration
+     *
+     * - Allows localhost for local development
+     * - Allows the deployed Vercel frontend
+     * - Allows a custom frontend URL via FRONTEND_URL env
+     *
+     * This MUST include the exact origin you see in the browser
+     * devtools (e.g. https://vessify-frontend.vercel.app) otherwise
+     * the browser will fail the preflight request and show
+     * "No 'Access-Control-Allow-Origin' header is present".
+     */
     origin: (origin) => {
-      if (origin) {
-        console.log(`[CORS Request] Origin: ${origin} - MIRRORED`);
+      const allowedOrigins = new Set<string>([
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://vessify-frontend.vercel.app",
+      ]);
+
+      const envFrontend = process.env.FRONTEND_URL;
+      if (envFrontend) {
+        allowedOrigins.add(envFrontend);
+      }
+
+      if (!origin) {
+        // Non-browser clients / same-origin requests
+        return "https://vessify-frontend.vercel.app";
+      }
+
+      if (allowedOrigins.has(origin)) {
+        console.log(`[CORS] Allowing origin: ${origin}`);
         return origin;
       }
-      return "https://vessify-frontend.vercel.app";
+
+      // Allow any *.vercel.app frontend (useful for preview deployments)
+      if (origin.endsWith(".vercel.app")) {
+        console.log(`[CORS] Allowing Vercel origin: ${origin}`);
+        return origin;
+      }
+
+      console.warn(`[CORS] Blocked origin: ${origin}`);
+      // Returning an empty string means no Access-Control-Allow-Origin header,
+      // which causes the browser to block the request.
+      return "";
     },
     credentials: true,
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "X-Requested-With", "X-Better-Auth", "X-Better-Auth-Organization-Id"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "X-Better-Auth",
+      "X-Better-Auth-Organization-Id",
+    ],
     exposeHeaders: ["X-Better-Auth"],
   })
 );
