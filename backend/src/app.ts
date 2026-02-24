@@ -22,7 +22,7 @@ app.use("*", async (c, next) => {
 
   // Handle Internal Preflight (OPTIONS)
   if (c.req.method === "OPTIONS") {
-    return c.text("", 204, {
+    return c.text("", 204 as any, {
       "Access-Control-Allow-Origin": origin || "*",
       "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Better-Auth, X-Better-Auth-Organization-Id",
