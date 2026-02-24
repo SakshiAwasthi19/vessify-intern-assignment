@@ -11,21 +11,13 @@ app.use(
   "*",
   cors({
     // ⚠️ CRITICAL FIX: Trusted Origins for CORS
-    origin: (origin, c) => {
-      const trustedOrigins = [
-        "https://vessify-frontend.vercel.app",
-        "https://vessify-frontend.vercel.app/",
-        "http://localhost:3000",
-        "http://localhost:3001",
-        ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
-      ];
-
-      if (origin && trustedOrigins.includes(origin)) {
-        console.log(`[CORS Request] Origin: ${origin} - ALLOWED`);
+    // ⚠️ NUCLEAR FIX: Mirror any origin that asks
+    origin: (origin) => {
+      if (origin) {
+        console.log(`[CORS Request] Origin: ${origin} - MIRRORED`);
         return origin;
       }
-      console.log(`[CORS Request] Origin: ${origin} - BLOCKED`);
-      return null; // Block untrusted origins
+      return "https://vessify-frontend.vercel.app";
     },
     credentials: true,
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
