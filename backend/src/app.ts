@@ -11,12 +11,16 @@ app.use(
   "*",
   cors({
     origin: (origin) => {
-      // Allow localhost for development
-      if (!origin || origin.startsWith("http://localhost")) return origin;
-      // Allow configured frontend URL
-      if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return origin;
-      // Fallback/Block others (or just return the env var)
-      return process.env.FRONTEND_URL || "http://localhost:3000";
+      const allowedOrigins = [
+        process.env.FRONTEND_URL,
+        "https://vessify-frontend.vercel.app",
+        "http://localhost:3000",
+      ].filter(Boolean) as string[];
+
+      if (!origin || origin.startsWith("http://localhost") || allowedOrigins.includes(origin)) {
+        return origin;
+      }
+      return allowedOrigins[0];
     },
     credentials: true,
   })
