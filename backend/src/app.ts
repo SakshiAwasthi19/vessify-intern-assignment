@@ -57,6 +57,26 @@ app.get("/health", (c) =>
   })
 );
 
+app.get("/debug/sessions", async (c) => {
+  try {
+    const { prisma } = await import("./lib/db");
+    const sessions = await prisma.session.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        token: true,
+        userId: true,
+        expiresAt: true,
+        createdAt: true
+      }
+    });
+    return c.json({ count: sessions.length, sessions });
+  } catch (e: any) {
+    return c.json({ error: e.message });
+  }
+});
+
 
 
 // 4. AUTH ROUTES
