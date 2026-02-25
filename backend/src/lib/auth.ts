@@ -28,7 +28,7 @@ console.log(logMsg);
 logToFile(logMsg);
 
 export const auth = betterAuth({
-    adapter: prismaAdapter(prisma, {
+    database: prismaAdapter(prisma, {
         provider: "postgresql",
     }),
 
