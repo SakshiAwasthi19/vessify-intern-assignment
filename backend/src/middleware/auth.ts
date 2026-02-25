@@ -1,6 +1,8 @@
 import { Context, Next } from "hono";
 import { auth } from "../lib/auth";
 import { prisma } from "../lib/db";
+import crypto from "crypto";
+
 
 // Extend Hono context
 declare module "hono" {
@@ -153,21 +155,25 @@ export async function authMiddleware(c: Context, next: Next) {
           console.log("📝 Creating organization...");
           const organization = await tx.organization.create({
             data: {
+              id: crypto.randomUUID(),
               name: "Personal",
               slug: `personal-${userId.substring(0, 8)}-${Date.now()}`,
             },
           });
+
           console.log("✅ Organization created:", organization.id);
 
           // Create membership
           console.log("📝 Creating membership...");
           await tx.organizationMember.create({
             data: {
+              id: crypto.randomUUID(),
               userId: userId,
               organizationId: organization.id,
               role: "owner",
             },
           });
+
           console.log("✅ Membership created");
 
           return { user: newUser, organization };
@@ -260,12 +266,13 @@ export async function authMiddleware(c: Context, next: Next) {
               console.log("📝 Creating new user...");
               txUser = await tx.user.create({
                 data: {
-                  id: userId,
-                  email: userEmail || `user-${userId}@temp.config`,
-                  name: userName,
+                  id: crypto.randomUUID(),
+                  email: userEmail || `user-${userId}@temp.com`,
+                  name: userName || null,
                   emailVerified: false
                 }
               });
+
             }
           }
 
@@ -284,19 +291,23 @@ export async function authMiddleware(c: Context, next: Next) {
           console.log("📝 Creating new organization for user:", txUser.id);
           const organization = await tx.organization.create({
             data: {
+              id: crypto.randomUUID(),
               name: "Personal",
               slug: `personal-${txUser.id.substring(0, 8)}-${Date.now()}`,
             },
           });
 
+
           // 3. Create membership linking user to organization
           await tx.organizationMember.create({
             data: {
+              id: crypto.randomUUID(),
               userId: txUser.id, // Use the confirmed user ID
               organizationId: organization.id,
               role: "owner",
             },
           });
+
 
           return { organization, user: txUser };
         });
