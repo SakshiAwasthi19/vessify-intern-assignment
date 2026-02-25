@@ -23,17 +23,20 @@ async function apiFetch(path: string, options: RequestInit = {}) {
     headers["Content-Type"] = "application/json";
   }
 
-  // Always attach Authorization header if token exists
-  if (token) {
+  // Always attach Authorization header if token exists IN STORAGE
+  // BUT don't overwrite if one was manually provided in options.headers
+  if (token && !headers["Authorization"]) {
     headers.Authorization = `Bearer ${token}`;
     // Debug log (remove in production)
-    console.log("🔑 Sending request with token:", {
+    console.log("🔑 Sending request with stored token:", {
       path,
       tokenLength: token.length,
-      tokenPrefix: token.substring(0, 20) + "...",
     });
-  } else {
+  } else if (!headers["Authorization"]) {
+    // Only warn if absolutely no token is available from either storage or manual options
     console.warn("⚠️ No token available for request:", path);
+  } else if (headers["Authorization"]) {
+    console.log("🔑 Sending request with manual token for path:", path);
   }
 
   try {
@@ -134,16 +137,21 @@ export const authApi = {
     });
   },
 
-  async getToken(manualToken?: string) {
+  async getToken(sessionToken?: string, userId?: string) {
     // Get JWT token from backend
-    // If manualToken is provided (from register/login response), use it as Bearer
+    // If sessionToken is provided, use it as Bearer
+    const params = new URLSearchParams();
+    if (userId) params.set("userId", userId);
+
+    const url = `/api/auth/token${params.toString() ? '?' + params.toString() : ''}`;
+
     const options: RequestInit = { method: "GET" };
-    if (manualToken) {
+    if (sessionToken) {
       options.headers = {
-        Authorization: `Bearer ${manualToken}`,
+        Authorization: `Bearer ${sessionToken}`,
       };
     }
-    return apiFetch("/api/auth/token", options);
+    return apiFetch(url, options);
   },
 
   async logout() {

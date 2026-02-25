@@ -51,11 +51,12 @@ export default function RegisterPage() {
 
       let token: string | null = null;
       const sessionToken = res.token || res.session?.token;
+      const userId = res.user?.id;
 
       // Try to get JWT token from backend
       try {
-        console.log("🔑 Fetching JWT token from backend using session token if available...");
-        const tokenRes = await authApi.getToken(sessionToken);
+        console.log("🔑 Fetching JWT token from backend using session token & userId...");
+        const tokenRes = await authApi.getToken(sessionToken, userId);
         console.log("🔍 Token response:", JSON.stringify(tokenRes, null, 2));
         token = tokenRes.token;
 

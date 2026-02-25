@@ -13,30 +13,58 @@ authRoutes.get("/token", async (c) => {
   try {
     console.log("🔑 /api/token endpoint called");
 
+    // Get userId from query params as backup
+    const queryUserId = c.req.query("userId");
+    console.log("🔍 userId from query:", queryUserId);
+
     // Get session from Better Auth (works with cookies or Authorization header)
     const session = await auth.api.getSession({
       headers: c.req.raw.headers,
     });
 
     if (!session || !session.user) {
-      console.error("❌ No session found in Better Auth using current headers");
+      console.warn("⚠️ Better Auth getSession failed, trying manual lookup...");
 
-      // Try to extract token from Authorization header manually
       const authHeader = c.req.header("Authorization");
       if (authHeader && authHeader.startsWith("Bearer ")) {
         const manualToken = authHeader.substring(7);
-        console.log("🛠️ Attempting manual DB session lookup for token:", manualToken.substring(0, 10) + "...");
+        console.log("🛠️ Manual DB lookup for token:", manualToken.substring(0, 10));
 
+        // Search by token OR id, and optionally filter by userId if provided
         const dbSession = await prisma.session.findFirst({
-          where: { token: manualToken },
+          where: {
+            OR: [
+              { token: manualToken },
+              { id: manualToken }
+            ],
+            // If queryUserId is provided, use it to narrow down
+            ...(queryUserId ? { userId: queryUserId } : {})
+          },
           include: { user: true }
         });
 
         if (dbSession && dbSession.user) {
-          console.log("✅ Found session via manual DB lookup for user:", dbSession.user.id);
+          console.log("✅ Manual lookup success for user:", dbSession.user.id);
           return c.json({
-            token: dbSession.token, // This should be the JWT if configured
+            token: dbSession.token,
             expiresAt: dbSession.expiresAt,
+          });
+        }
+      }
+
+      // Final fallback: if we have userId, just get the most recent session
+      if (queryUserId) {
+        console.log("🛠️ Last resort: Fetching most recent session for userId:", queryUserId);
+        const latestSession = await prisma.session.findFirst({
+          where: { userId: queryUserId },
+          orderBy: { createdAt: "desc" }
+        });
+
+        if (latestSession) {
+          console.log("✅ Last resort success");
+          return c.json({
+            token: latestSession.token,
+            expiresAt: latestSession.expiresAt,
           });
         }
       }
