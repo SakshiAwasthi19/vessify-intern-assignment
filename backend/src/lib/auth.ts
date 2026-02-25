@@ -62,16 +62,6 @@ export const auth = betterAuth({
         ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
     ],
 
-    // Cookie configuration for cross-domain (Vercel + Render)
-    advanced: {
-        crossTab: true,
-        cookie: {
-            sameSite: "none",
-            secure: true,
-        },
-        generateId: undefined, // Use default
-    },
-
     // Secret Key
     secret: process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET,
 
