@@ -134,11 +134,16 @@ export const authApi = {
     });
   },
 
-  async getToken() {
-    // Get JWT token from backend (uses cookies/session to identify user)
-    return apiFetch("/api/auth/token", {
-      method: "GET",
-    });
+  async getToken(manualToken?: string) {
+    // Get JWT token from backend
+    // If manualToken is provided (from register/login response), use it as Bearer
+    const options: RequestInit = { method: "GET" };
+    if (manualToken) {
+      options.headers = {
+        Authorization: `Bearer ${manualToken}`,
+      };
+    }
+    return apiFetch("/api/auth/token", options);
   },
 
   async logout() {

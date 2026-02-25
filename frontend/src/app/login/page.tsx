@@ -51,11 +51,12 @@ export default function LoginPage() {
       await new Promise(resolve => setTimeout(resolve, 300));
 
       let token: string | null = null;
+      const sessionToken = res.token || res.session?.token;
 
       // Try to get JWT token from backend
       try {
-        console.log("🔑 Fetching JWT token from backend...");
-        const tokenRes = await authApi.getToken();
+        console.log("🔑 Fetching JWT token from backend using session token if available...");
+        const tokenRes = await authApi.getToken(sessionToken);
         console.log("🔍 Token response:", JSON.stringify(tokenRes, null, 2));
         token = tokenRes.token;
 
