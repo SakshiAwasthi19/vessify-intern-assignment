@@ -92,7 +92,12 @@ export default function RegisterPage() {
       setToken(token);
       console.log("✅ Token saved to localStorage:", token.substring(0, 20) + "...");
 
-      // Redirect to login page
+      // Also log if it's not a JWT so user knows why some things might fail
+      if (token && (token.length < 50 || !token.includes('.'))) {
+        console.warn("🔔 Note: Using session ID instead of JWT. Some restricted API calls might require a full JWT refresh.");
+      }
+
+      // Redirect to login page or dashboard
       router.push("/login");
     } catch (err: any) {
       setError(err.message || "Registration failed. Please try again.");

@@ -59,6 +59,9 @@ app.get("/health", (c) =>
 
 
 
+// 4. AUTH ROUTES
+app.route("/api/auth", authRoutes);
+
 app.all("/api/auth/*", async (c) => {
   try {
     const res = await auth.handler(c.req.raw);
@@ -67,9 +70,6 @@ app.all("/api/auth/*", async (c) => {
     return c.json({ error: "Authentication error", details: String(error) }, 500);
   }
 });
-
-// 4. AUTH ROUTES
-app.route("/api/auth", authRoutes);
 
 // 5. BUSINESS ROUTES
 app.route("/api/transactions", transactionRoutes);
