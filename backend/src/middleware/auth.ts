@@ -54,8 +54,8 @@ export async function authMiddleware(c: Context, next: Next) {
         // JWT format: header.payload.signature
         const parts = token.split('.');
         if (parts.length !== 3) {
-          console.error("❌ Invalid JWT format (not 3 parts)");
-          return c.json({ error: "Unauthorized: Invalid token format" }, 401);
+          console.log("ℹ️ Token is not a JWT format, falling back to session ID lookup");
+          throw new Error("NOT_A_JWT");
         }
 
         // Decode payload (base64url)
