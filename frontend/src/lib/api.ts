@@ -137,23 +137,6 @@ export const authApi = {
     });
   },
 
-  async getToken(sessionToken?: string, userId?: string) {
-    // Get JWT token from backend
-    // If sessionToken is provided, use it as Bearer
-    const params = new URLSearchParams();
-    if (userId) params.set("userId", userId);
-
-    const url = `/api/auth/token${params.toString() ? '?' + params.toString() : ''}`;
-
-    const options: RequestInit = { method: "GET" };
-    if (sessionToken) {
-      options.headers = {
-        Authorization: `Bearer ${sessionToken}`,
-      };
-    }
-    return apiFetch(url, options);
-  },
-
   async logout() {
     // Backend may return empty body - apiFetch handles it safely
     return apiFetch("/api/auth/sign-out", {

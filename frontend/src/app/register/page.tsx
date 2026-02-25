@@ -44,63 +44,16 @@ export default function RegisterPage() {
     try {
       const res = await authApi.register(data.email, data.password, data.name);
 
-      // Better Auth typically doesn't return JWT in register response
-      // We need to fetch it from the backend token endpoint
-      // Wait a bit for session to be created in database
-      await new Promise(resolve => setTimeout(resolve, 300));
+      const token = res.token || res.session?.token;
 
-      let token: string | null = null;
-      const sessionToken = res.token || res.session?.token;
-      const userId = res.user?.id;
-
-      // Try to get JWT token from backend
-      try {
-        console.log("🔑 Fetching JWT token from backend using session token & userId...");
-        const tokenRes = await authApi.getToken(sessionToken, userId);
-        console.log("🔍 Token response:", JSON.stringify(tokenRes, null, 2));
-        token = tokenRes.token;
-
-        // Validate token is a JWT (should be long and contain dots)
-        if (token && token.length > 50 && token.includes('.')) {
-          console.log("✅ Valid JWT token received");
-        } else {
-          console.warn("⚠️ Token doesn't look like a JWT:", token?.substring(0, 50));
-        }
-      } catch (tokenErr: any) {
-        console.error("❌ Failed to get token from backend:", tokenErr);
-        // Try to extract from register response as last resort
-        token =
-          res.token ||
-          res.session?.token ||
-          res.data?.token ||
-          res.data?.session?.token ||
-          res.user?.session?.token ||
-          null;
-
-        // Only use if it looks like a JWT (not a session ID)
-        if (token && (token.length < 50 || !token.includes('.'))) {
-          console.warn("⚠️ Token from register response doesn't look like a JWT, ignoring:", token.substring(0, 30));
-          token = null;
-        }
-      }
-
-      // Log full response for debugging (remove in production)
       if (!token) {
-        console.error("Register response structure:", JSON.stringify(res, null, 2));
-        throw new Error("No token received from server. Please check console for response structure.");
+        console.error("Register response:", JSON.stringify(res, null, 2));
+        throw new Error("No token received from server.");
       }
 
-      // Save token to localStorage
       setToken(token);
-      console.log("✅ Token saved to localStorage:", token.substring(0, 20) + "...");
-
-      // Also log if it's not a JWT so user knows why some things might fail
-      if (token && (token.length < 50 || !token.includes('.'))) {
-        console.warn("🔔 Note: Using session ID instead of JWT. Some restricted API calls might require a full JWT refresh.");
-      }
-
-      // Redirect to login page or dashboard
       router.push("/login");
+
     } catch (err: any) {
       setError(err.message || "Registration failed. Please try again.");
       setLoading(false);
