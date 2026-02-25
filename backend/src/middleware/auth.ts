@@ -59,39 +59,64 @@ export async function authMiddleware(c: Context, next: Next) {
         }
 
         // Decode payload (base64url)
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
-        console.log("📋 Decoded JWT payload:", {
-          id: payload.id,
-          email: payload.email,
-          exp: payload.exp,
-          expDate: payload.exp ? new Date(payload.exp * 1000).toISOString() : null,
-        });
-
-        // Check expiration
-        if (payload.exp && payload.exp * 1000 < Date.now()) {
-          console.error("❌ JWT token expired");
-          return c.json({ error: "Unauthorized: Token expired" }, 401);
-        }
-
-        // Use payload data as session data
-        session = {
-          user: {
-            id: payload.id || payload.sub,
+        try {
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+          console.log("📋 Decoded JWT payload:", {
+            id: payload.id,
             email: payload.email,
-            name: payload.name,
-          },
-          session: {
-            expiresAt: payload.exp ? new Date(payload.exp * 1000) : null,
-          },
-        };
+            exp: payload.exp,
+            expDate: payload.exp ? new Date(payload.exp * 1000).toISOString() : null,
+          });
 
-        console.log("✅ Manual JWT verification successful");
+          // Check expiration
+          if (payload.exp && payload.exp * 1000 < Date.now()) {
+            console.error("❌ JWT token expired");
+            return c.json({ error: "Unauthorized: Token expired" }, 401);
+          }
+
+          // Use payload data as session data
+          session = {
+            user: {
+              id: payload.id || payload.sub,
+              email: payload.email,
+              name: payload.name,
+            },
+            session: {
+              expiresAt: payload.exp ? new Date(payload.exp * 1000) : null,
+            },
+          };
+
+          console.log("✅ Manual JWT verification successful");
+        } catch (e) {
+          console.error("❌ JWT parse error, falling back to session ID lookup");
+          throw new Error("NOT_A_JWT");
+        }
       } catch (jwtError: any) {
-        console.error("❌ Manual JWT verification failed:", {
-          message: jwtError?.message,
-          name: jwtError?.name,
+        console.log("🛠️ Attempting manual Session ID lookup in database...");
+
+        // Lookup session in DB by id OR token
+        const dbSession = await prisma.session.findFirst({
+          where: {
+            OR: [
+              { id: token },
+              { token: token }
+            ]
+          },
+          include: { user: true }
         });
-        return c.json({ error: "Unauthorized: Invalid or expired token" }, 401);
+
+        if (dbSession && dbSession.user) {
+          console.log("✅ Manual session lookup successful for user:", dbSession.user.id);
+          session = {
+            user: dbSession.user,
+            session: {
+              expiresAt: dbSession.expiresAt
+            }
+          };
+        } else {
+          console.error("❌ Manual session lookup failed");
+          return c.json({ error: "Unauthorized: Invalid or expired token" }, 401);
+        }
       }
     }
 
