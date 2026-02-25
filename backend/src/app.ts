@@ -75,6 +75,13 @@ app.get("/debug/tables", async (c) => {
   }
 });
 
+app.get("/debug/db", async (c) => {
+  const dbUrl = process.env.DATABASE_URL || "NOT SET";
+  const masked = dbUrl.substring(0, 40) + "...";
+  return c.json({ databaseUrl: masked });
+});
+
+
 
 app.get("/debug/sessions", async (c) => {
   try {
