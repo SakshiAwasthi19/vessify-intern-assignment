@@ -28,55 +28,58 @@ export async function authMiddleware(c: Context, next: Next) {
     const token = authHeader.substring(7); // Remove "Bearer " prefix
     console.log("🔑 Token received, length:", token.length, "prefix:", token.substring(0, 20) + "...");
 
-    // Try to verify session using Better Auth
-    // Better Auth's getSession should work with Authorization header when JWT plugin is enabled
     let session;
+
+    // STEP 1: Try direct database session lookup (most reliable for session tokens)
     try {
-      session = await auth.api.getSession({
-        headers: new Headers({
-          Authorization: `Bearer ${token}`,
-        }),
+      const dbSession = await prisma.session.findFirst({
+        where: {
+          OR: [
+            { id: token },
+            { token: token }
+          ],
+          expiresAt: {
+            gt: new Date() // Not expired
+          }
+        },
+        include: { user: true }
       });
-      console.log("📋 Better Auth getSession result:", session ? "Valid" : "Invalid");
-    } catch (sessionError: any) {
-      console.error("❌ Better Auth getSession error:", {
-        message: sessionError?.message,
-        name: sessionError?.name,
-      });
-      // Continue to manual JWT verification as fallback
-      session = null;
+
+      if (dbSession && dbSession.user) {
+        console.log("✅ DB session lookup successful for user:", dbSession.user.id);
+        session = {
+          user: dbSession.user,
+          session: { expiresAt: dbSession.expiresAt }
+        };
+      }
+    } catch (dbError: any) {
+      console.error("❌ DB session lookup error:", dbError?.message);
     }
 
-    // If Better Auth's getSession doesn't work, manually verify JWT
+    // STEP 2: If DB lookup failed, try Better Auth getSession
     if (!session || !session.user) {
-      console.log("⚠️ Better Auth getSession failed, trying manual JWT verification...");
-
       try {
-        // Manually decode JWT to get user info
-        // JWT format: header.payload.signature
-        const parts = token.split('.');
-        if (parts.length !== 3) {
-          console.log("ℹ️ Token is not a JWT format, falling back to session ID lookup");
-          throw new Error("NOT_A_JWT");
-        }
+        session = await auth.api.getSession({
+          headers: new Headers({
+            Authorization: `Bearer ${token}`,
+          }),
+        });
+        console.log("📋 Better Auth getSession result:", session ? "Valid" : "Invalid");
+      } catch (sessionError: any) {
+        console.error("❌ Better Auth getSession error:", sessionError?.message);
+        session = null;
+      }
+    }
 
-        // Decode payload (base64url)
+    // STEP 3: If both failed, try manual JWT decode (for actual JWTs)
+    if (!session || !session.user) {
+      const parts = token.split('.');
+      if (parts.length === 3) {
         try {
           const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
-          console.log("📋 Decoded JWT payload:", {
-            id: payload.id,
-            email: payload.email,
-            exp: payload.exp,
-            expDate: payload.exp ? new Date(payload.exp * 1000).toISOString() : null,
-          });
-
-          // Check expiration
           if (payload.exp && payload.exp * 1000 < Date.now()) {
-            console.error("❌ JWT token expired");
             return c.json({ error: "Unauthorized: Token expired" }, 401);
           }
-
-          // Use payload data as session data
           session = {
             user: {
               id: payload.id || payload.sub,
@@ -87,43 +90,16 @@ export async function authMiddleware(c: Context, next: Next) {
               expiresAt: payload.exp ? new Date(payload.exp * 1000) : null,
             },
           };
-
           console.log("✅ Manual JWT verification successful");
-        } catch (e) {
-          console.error("❌ JWT parse error, falling back to session ID lookup");
-          throw new Error("NOT_A_JWT");
-        }
-      } catch (jwtError: any) {
-        console.log("🛠️ Attempting manual Session ID lookup in database...");
-
-        // Lookup session in DB by id OR token
-        const dbSession = await prisma.session.findFirst({
-          where: {
-            OR: [
-              { id: token },
-              { token: token }
-            ]
-          },
-          include: { user: true }
-        });
-
-        if (dbSession && dbSession.user) {
-          console.log("✅ Manual session lookup successful for user:", dbSession.user.id);
-          session = {
-            user: dbSession.user,
-            session: {
-              expiresAt: dbSession.expiresAt
-            }
-          };
-        } else {
-          console.error("❌ Manual session lookup failed");
-          return c.json({ error: "Unauthorized: Invalid or expired token" }, 401);
+        } catch (jwtError: any) {
+          console.error("❌ JWT decode failed:", jwtError?.message);
         }
       }
     }
 
+    // STEP 4: All methods failed
     if (!session || !session.user) {
-      console.error("❌ Session validation failed - no user in session");
+      console.error("❌ All auth methods failed for token:", token.substring(0, 10) + "...");
       return c.json({ error: "Unauthorized: Invalid or expired token" }, 401);
     }
 
