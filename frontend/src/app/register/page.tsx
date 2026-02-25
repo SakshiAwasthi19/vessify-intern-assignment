@@ -44,9 +44,7 @@ export default function RegisterPage() {
     try {
       const res = await authApi.register(data.email, data.password, data.name);
 
-      const token = res.token || res.session?.token || res.data?.token || res.data?.session?.token;
-      console.log("Full auth response:", JSON.stringify(res, null, 2));
-
+      const token = res.token || res.session?.token;
 
       if (!token) {
         console.error("Register response:", JSON.stringify(res, null, 2));

@@ -42,9 +42,7 @@ export default function LoginPage() {
     try {
       const res = await authApi.login(data.email, data.password);
 
-      const token = res.token || res.session?.token || res.data?.token || res.data?.session?.token;
-      console.log("Full auth response:", JSON.stringify(res, null, 2));
-
+      const token = res.token || res.session?.token;
 
       if (!token) {
         console.error("Login response:", JSON.stringify(res, null, 2));
