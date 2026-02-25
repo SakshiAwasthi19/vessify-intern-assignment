@@ -42,23 +42,16 @@ export default function LoginPage() {
     try {
       const res = await authApi.login(data.email, data.password);
 
-      // Log full response for debugging
-      console.log("🔍 Login response:", JSON.stringify(res, null, 2));
-
       const token = res.token || res.session?.token;
 
       if (!token) {
-        console.error("❌ No token found");
-        console.error("Full login response:", res);
-        throw new Error("No token received from server. Please try logging in again.");
+        console.error("Login response:", JSON.stringify(res, null, 2));
+        throw new Error("No token received from server.");
       }
 
-      // Save token to localStorage
       setToken(token);
-      console.log("✅ Token saved to localStorage:", token.substring(0, 20) + "...");
-
-      // Redirect to home page
       router.push("/");
+
     } catch (err: any) {
       setError(err.message || "Login failed. Please check your credentials.");
       setLoading(false);
