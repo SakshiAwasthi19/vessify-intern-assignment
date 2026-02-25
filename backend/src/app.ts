@@ -5,6 +5,8 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import transactionRoutes from "./routes/transactions.routes";
 import authRoutes from "./routes/auth.routes";
+import { prisma } from "./lib/db";
+
 
 export const app = new Hono();
 
@@ -57,9 +59,25 @@ app.get("/health", (c) =>
   })
 );
 
+app.get("/debug/tables", async (c) => {
+  try {
+    const tables = await prisma.$queryRaw`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+      ORDER BY table_name
+    `;
+    const sessionCount = await prisma.session.count();
+    const userCount = await prisma.user.count();
+    return c.json({ tables, sessionCount, userCount });
+  } catch (e: any) {
+    return c.json({ error: e.message });
+  }
+});
+
+
 app.get("/debug/sessions", async (c) => {
   try {
-    const { prisma } = await import("./lib/db");
     const sessions = await prisma.session.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
