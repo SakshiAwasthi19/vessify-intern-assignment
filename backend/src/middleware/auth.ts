@@ -33,7 +33,9 @@ export async function authMiddleware(c: Context, next: Next) {
     let session;
     try {
       session = await auth.api.getSession({
-        headers: c.req.raw.headers
+        headers: new Headers({
+          Authorization: `Bearer ${token}`,
+        }),
       });
       console.log("📋 Better Auth getSession result:", session ? "Valid" : "Invalid");
     } catch (sessionError: any) {
