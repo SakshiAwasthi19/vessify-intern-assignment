@@ -44,11 +44,13 @@ export function parseTransaction(text: string): ParsedTransaction {
     return parseFormat1(lines);
   }
 
-  // Try Format 2: Inline format with arrows
+  // Try Format 2: Inline format with arrows or dashes
   // Uber Ride * Airport Drop
   // 12/11/2025 → ₹1,250.00 debited
+  // 12 Nov 2025 — ₹1,250.00 debited
   // Available Balance → ₹17,170.50
-  if (normalized.includes('→') || normalized.match(/\d{1,2}\/\d{1,2}\/\d{4}/)) {
+  if (normalized.includes('→') || normalized.includes('—') || normalized.includes('–') ||
+    normalized.match(/\d{1,2}\/\d{1,2}\/\d{4}/) || normalized.match(/\d{1,2}\s+[A-Za-z]{3}\s+\d{4}/)) {
     return parseFormat2(lines);
   }
 
@@ -164,29 +166,32 @@ function parseFormat2(lines: string[]): ParsedTransaction {
   let balance: number | null = null;
 
   for (const line of lines) {
-    // First line is usually description (no date, no arrow)
-    if (!line.includes('→') && !line.match(/\d{1,2}\/\d{1,2}\/\d{4}/) && !line.match(/Available\s+Balance/i)) {
+    // First line is usually description (no markers, no date)
+    if (!line.includes('→') && !line.includes('—') && !line.includes('–') &&
+      !line.match(/\d{1,2}\/\d{1,2}\/\d{4}/) && !line.match(/\d{1,2}\s+[A-Za-z]{3}\s+\d{4}/) &&
+      !line.match(/Available\s+Balance/i)) {
       if (!description) {
         description = line.trim();
       }
     }
-    // Line with date and amount: "12/11/2025 → ₹1,250.00 debited"
-    else if (line.includes('→') && line.match(/\d{1,2}\/\d{1,2}\/\d{4}/)) {
-      const dateMatch = line.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+    // Line with date and amount: "12/11/2025 → ₹1,250.00 debited" or "12 Nov 2025 — ₹1,250.00 debited"
+    else if ((line.includes('→') || line.includes('—') || line.includes('–')) &&
+      (line.match(/\d{1,2}\/\d{1,2}\/\d{4}/) || line.match(/\d{1,2}\s+[A-Za-z]{3}\s+\d{4}/))) {
+      const dateMatch = line.match(/(\d{1,2}\/\d{1,2}\/\d{4})/) || line.match(/(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})/);
       if (dateMatch) {
         date = parseDate(dateMatch[1]);
       }
 
       // Extract amount (with rupee symbol and "debited" keyword)
-      // Match rupee symbol followed by number with commas and decimals (after the arrow)
-      const amountMatch = line.match(/→\s*[₹]?([\d,]+\.\d{2})/);
+      // Match rupee symbol followed by number with commas and decimals (after the arrow or dash)
+      const amountMatch = line.match(/(?:→|—|–)\s*[₹]?([\d,]+\.\d{2})/);
       if (amountMatch) {
         const amountStr = amountMatch[1];
         const isDebit = line.toLowerCase().includes('debited') || line.toLowerCase().includes('dr');
         amount = parseAmount(amountStr, isDebit);
       }
     }
-    // Line with balance: "Available Balance → ₹17,170.50"
+    // Line with balance: "Available Balance → ₹17,170.50" or "Available Balance — ₹17,170.50"
     else if (line.match(/Available\s+Balance/i)) {
       const balanceMatch = line.match(/[₹]?([\d,]+\.?\d*)/);
       if (balanceMatch) {

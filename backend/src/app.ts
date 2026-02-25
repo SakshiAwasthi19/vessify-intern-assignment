@@ -2,19 +2,31 @@
 import { Hono } from "hono";
 import { auth } from "./lib/auth";
 import { cors } from "hono/cors";
+import { logger } from "hono/logger";
 import transactionRoutes from "./routes/transactions.routes";
 import authRoutes from "./routes/auth.routes";
 
 export const app = new Hono();
 
 // VERSION FOR VERIFICATION
-const VERSION = "1.0.8-FINAL-ROUTING-FIX";
+const VERSION = "1.0.9-DIAGNOSTIC-FINAL";
 
-// 1. CLEAN & CORRECT CORS
+// 1. BUILT-IN LOGGER
+app.use("*", logger());
+
+// 2. CLEAN & CORRECT CORS
 app.use(
   "*",
   cors({
-    origin: "https://vessify-frontend.vercel.app",
+    origin: (origin) => {
+      const allowed = [
+        "https://vessify-frontend.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:3001",
+        process.env.FRONTEND_URL,
+      ].filter(Boolean) as string[];
+      return allowed.includes(origin) ? origin : allowed[0];
+    },
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: [
       "Content-Type",
@@ -27,12 +39,14 @@ app.use(
   })
 );
 
-// 2. DIAGNOSTICS (Must be high up)
+// 3. DIAGNOSTICS
+// Match both "/" and empty string for maximum reliability
 app.get("/", (c) =>
   c.json({
     message: "Vessify Backend API",
     status: "running",
     version: VERSION,
+    timestamp: new Date().toISOString(),
   })
 );
 
@@ -40,31 +54,32 @@ app.get("/health", (c) =>
   c.json({
     status: "ok",
     version: VERSION,
-    timestamp: new Date().toISOString(),
   })
 );
 
-// 3. AUTH ROUTES
-// Custom JWT auth routes (like /api/token)
-app.route("/api/auth", authRoutes);
 
-// Better Auth catch-all (Must be after specific authRoutes)
+
 app.all("/api/auth/*", async (c) => {
   try {
-    console.log(`[AUTH] ${c.req.method} ${c.req.url}`);
     const res = await auth.handler(c.req.raw);
     return res;
   } catch (error) {
-    console.error("[AUTH ERROR]", error);
     return c.json({ error: "Authentication error", details: String(error) }, 500);
   }
 });
 
-// 4. BUSINESS ROUTES
+// 4. AUTH ROUTES
+app.route("/api/auth", authRoutes);
+
+// 5. BUSINESS ROUTES
 app.route("/api/transactions", transactionRoutes);
 
-// 5. 404 HANDLER
+// 6. 404 HANDLER (JSON for structured debugging)
 app.notFound((c) => {
-  console.log(`[404] No route for ${c.req.method} ${c.req.url}`);
-  return c.json({ error: "Route not found", path: c.req.path }, 404);
+  return c.json({
+    error: "Route not found",
+    method: c.req.method,
+    path: c.req.path,
+    version: VERSION
+  }, 404);
 });

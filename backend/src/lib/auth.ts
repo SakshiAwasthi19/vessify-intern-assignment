@@ -59,6 +59,7 @@ export const auth = betterAuth({
         "https://vessify-frontend.vercel.app/",
         "http://localhost:3000",
         "http://localhost:3001",
+        ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
     ],
 
     // Cookie configuration for localhost development
