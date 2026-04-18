@@ -88,20 +88,18 @@ async function apiFetch(path: string, options: RequestInit = {}) {
         responseData: data,
       });
 
-      // If 401 and we have a token, it might be expired or invalid (e.g., after DB migration)
+      // If 401 and we have a token, it might be expired or invalid
       if (res.status === 401 && token) {
-        console.error("🔴 401 Unauthorized with token present - session is invalid. Redirecting to login...");
+        console.error("🔴 401 Unauthorized with token present - token may be expired or invalid");
 
-        // Auto-logout if we are in the browser
-        if (typeof window !== "undefined") {
-          try {
+        // Auto-logout if token is definitively expired
+        if (data?.code === "TOKEN_EXPIRED") {
+          console.warn("🔒 Token is expired, clearing storage and redirecting...");
+          // Only clear if we are in the browser
+          if (typeof window !== "undefined") {
             const { clearToken } = await import("./auth");
             clearToken();
-            // Optional: add a small delay to ensure console logs are visible if needed, 
-            // but immediate redirect is usually better.
-            window.location.href = "/login?error=session_invalid";
-          } catch (e) {
-            console.error("Failed to auto-logout:", e);
+            window.location.href = "/login";
           }
         }
       }

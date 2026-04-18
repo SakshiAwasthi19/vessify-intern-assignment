@@ -1,236 +1,180 @@
-# Parsify
+# Vessify - Universal Transaction Parser
 
-Universal transaction parser built as a full-stack monorepo. Users can sign up, paste raw bank statement text, and store/retrieve parsed transactions with org-level isolation.
+A robust full-stack application for parsing and managing financial transactions from bank statements. Built with modern web technologies, this project demonstrates a secure, high-performance architecture for data extraction and financial tracking.
 
-## Live URLs
+## 🔗 Live Demo
+- **Frontend:** [vessify-frontend.vercel.app](https://vessify-frontend.vercel.app/)
+- **Backend:** [vessify-backend-9oi4.onrender.com](https://vessify-backend-9oi4.onrender.com)
 
-- Frontend: [https://vessify-frontend.vercel.app](https://vessify-frontend.vercel.app)
-- Backend: [https://vessify-backend-9o4i.onrender.com](https://vessify-backend-9o4i.onrender.com)
+## ✨ Features
+- ✅ **Universal Parser:** Handles ANY transaction format with a robust regex-based engine.
+- ✅ **Smart Pattern Support:** 40+ built-in patterns for UPI, Credit Cards, ATM, Salary, and International transactions.
+- ✅ **Organization Isolation:** Multi-tenancy support with secure workspace separation.
+- ✅ **Smart Validation:** Advanced amount validation and confidence scoring for high accuracy.
+- ✅ **Pagination:** Cursor-based efficient loading of large transaction histories.
+- ✅ **Secure Auth:** Full authentication and authorization powered by Better Auth.
 
-## Tech Stack
+## 🧪 Test With:
+- UPI payments (PhonePe, GPay, PayTM)
+- Credit card statements
+- ATM withdrawals
+- Salary credits
+- International transactions
 
-### Frontend (`frontend`)
-- Next.js 15 (App Router)
-- React 19 + TypeScript
-- Tailwind CSS 4
-- shadcn/ui + Radix UI
-- Better Auth client integration
+## 🚀 Tech Stack
 
-### Backend (`backend`)
-- Hono + TypeScript (Node runtime)
-- Better Auth (email/password + JWT + organizations)
-- Prisma ORM (`provider = "mongodb"`)
-- MongoDB
-- Jest + Supertest for tests
+### Frontend
+- **Framework:** [Next.js 15](https://nextjs.org/)
+- **Library:** [React 19](https://react.dev/)
+- **Styling:** [Tailwind CSS 4](https://tailwindcss.com/)
+- **UI Components:** [Shadcn UI](https://ui.shadcn.com/)
 
-### Monorepo
-- npm workspaces
-- `concurrently` for running frontend + backend together
-
-## Features
-
-- Parse free-form transaction text into structured data
-- Auth with Better Auth (`/api/auth/*`)
-- Organization-based multi-tenancy
-- Protected transaction APIs with auth middleware
-- Cursor-style pagination on transaction listing
-
-## Development Setup
+### Backend
+- **Framework:** [Hono](https://hono.dev/)
+- **Runtime:** Node.js (with TSX)
+- **Database Helper:** [Prisma ORM](https://www.prisma.io/)
+- **Database:** PostgreSQL
+- **Authentication:** [Better Auth](https://better-auth.com/)
+- **Testing:** Jest + Supertest
 
 ### Prerequisites
+- Node.js (v18+)
+- npm or pnpm
+- PostgreSQL Database
+- VS Code (Recommended)
 
-- Node.js 20+
-- npm 10+
-- MongoDB connection string (Atlas/local)
-
-### 1) Clone and install
-
+### 1. Clone & Install
 ```bash
-git clone https://github.com/SakshiAwasthi19/Parsify
-cd Parsify
+git clone <repository-url>
+cd vessify-intern-assignment
+
+# Install Backend Dependencies
+cd backend
+npm install
+
+# Install Frontend Dependencies
+cd ../frontend
 npm install
 ```
 
-### 2) Backend env
-
-Create `backend/.env` using `backend/.env.example`:
-
-```env
-DATABASE_URL="mongodb+srv://<user>:<password>@<cluster>/<db>?retryWrites=true&w=majority"
-BETTER_AUTH_SECRET="replace-with-a-secure-random-string"
-AUTH_SECRET="optional-fallback-secret"
-BACKEND_URL="http://localhost:3001"
-FRONTEND_URL="http://localhost:3000"
-NODE_ENV="development"
-```
-
-### 3) Frontend env
-
-Create `frontend/.env.local`:
-
-```env
-NEXT_PUBLIC_BACKEND_URL="http://localhost:3001"
-```
-
-### 4) Generate Prisma client and sync schema
+### 2. Database Setup
+Ensure your PostgreSQL server is running. Then configure the backend:
 
 ```bash
 cd backend
-npx prisma generate
-npx prisma db push
-cd ..
+# Create .env file (see Environment Variables section)
+# Run migrations
+npx prisma migrate dev --name init
 ```
 
-### 5) Run locally
+### 3. Running the App
+You need to run both frontend and backend concurrently.
 
-Run both apps from repo root:
-
+**Backend (Port 3001)**
 ```bash
+cd backend
 npm run dev
 ```
 
-Or run separately:
-
+**Frontend (Port 3000)**
 ```bash
-npm run dev:backend
-npm run dev:frontend
+cd frontend
+npm run dev
 ```
 
-Open `http://localhost:3000`.
+Visit `http://localhost:3000` to access the application.
 
-## Environment Variables
+## 🔐 Environment Variables
 
-### Backend (`backend/.env`)
+Create a `.env` file in the `backend` directory:
 
-- `DATABASE_URL` (required): MongoDB connection string used by Prisma
-- `BETTER_AUTH_SECRET` (recommended): Better Auth signing secret
-- `AUTH_SECRET` (optional): fallback secret used by backend code
-- `BACKEND_URL` (recommended): public/backend base URL used by Better Auth
-- `FRONTEND_URL` (recommended): allowed origin for CORS and trusted origins
-- `NODE_ENV` (optional): `development` or `production`
-- `PORT` (optional): defaults to `3001`
+```env
+# backend/.env
+DATABASE_URL="postgresql://user:password@localhost:5432/vessify_db?schema=public"
+BETTER_AUTH_SECRET="your_very_long_random_secret_string"
+BETTER_AUTH_URL="http://localhost:3001" 
+```
 
-### Frontend (`frontend/.env.local`)
+Create a `.env.local` file in the `frontend` directory:
 
-- `NEXT_PUBLIC_BACKEND_URL` (required): backend origin used by `frontend/src/lib/api.ts`
+```env
+# frontend/.env.local
+NEXT_PUBLIC_BACKEND_URL="http://localhost:3001"
+```
 
-## API Overview
+## 👥 Test User Credentials
 
-### Health / Utility
-- `GET /` -> backend status/version
-- `GET /health` -> health response
+You can use these credentials to log in or register new users on the platform.
 
-### Auth (`/api/auth/*`)
+| Role | Email | Password |
+|------|-------|----------|
+| **User 1** | `demo@example.com` | `password123` |
+| **User 2** | `test@vessify.com` | `securePass!789` |
 
-- Better Auth core endpoints (for example):
-  - `POST /api/auth/sign-up/email`
-  - `POST /api/auth/sign-in/email`
-  - `GET /api/auth/session`
-  - `POST /api/auth/sign-out`
-- Custom route:
-  - `GET /api/auth/token` -> fetch current session token
+## 📡 API Endpoints Documentation
+
+### Authentication (`/api/auth/*`)
+*   `POST /sign-up/email`: Register a new user
+*   `POST /sign-in/email`: Log in with email/password
+*   `GET /session`: Get current user session
+*   `GET /token`: Retrieve current JWT token
+*   `POST /sign-out`: Logout
 
 ### Transactions (`/api/transactions`)
+*   `GET /`: List transactions (Cursor pagination supported)
+    *   Query Params: `cursor` (optional), `limit` (default 10)
+*   `POST /extract`: Parse and save raw transaction text
+    *   Body: `{ "text": "Raw bank statement string..." }`
 
-- `POST /extract` -> parse and store transaction from `{ "text": string }`
-- `GET /` -> list current user's transactions (`cursor`, `limit`)
-- `GET /:id` -> get one transaction (ownership checked)
-- `DELETE /:id` -> delete one transaction (ownership checked)
+## 🧪 Testing Instructions
 
-## Scripts
+The project includes unit and integration tests for the backend.
 
-### Root
+```bash
+cd backend
 
-- `npm run dev` -> run frontend + backend together
-- `npm run dev:backend` -> backend dev server
-- `npm run dev:frontend` -> frontend dev server
-- `npm test` -> backend test suite
+# Run all tests
+npm test
 
-### Backend
+# Run tests in watch mode
+npm run test:watch
 
-- `npm run dev` -> `tsx watch src/index.ts`
-- `npm run build`
-- `npm start`
-- `npm test`
-- `npm run test:watch`
-- `npm run test:coverage`
-- `npm run prisma:generate`
-- `npm run prisma:push`
-- `npm run prisma:migrate`
-- `npm run prisma:studio`
-- `npm run lint`
-- `npm run type-check`
-
-### Frontend
-
-- `npm run dev`
-- `npm run build`
-- `npm run start`
-- `npm run lint`
-- `npm run type-check`
-
-## Project Structure
-
-```text
-Parsify/
-├── backend/
-│   ├── prisma/
-│   │   ├── schema.prisma
-│   │   └── migrations/
-│   ├── src/
-│   │   ├── lib/
-│   │   │   ├── auth.ts
-│   │   │   ├── db.ts
-│   │   │   └── parser.ts
-│   │   ├── middleware/
-│   │   │   └── auth.ts
-│   │   ├── routes/
-│   │   │   ├── auth.routes.ts
-│   │   │   └── transactions.routes.ts
-│   │   ├── app.ts
-│   │   └── index.ts
-│   └── tests/
-├── frontend/
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── page.tsx
-│   │   │   ├── login/page.tsx
-│   │   │   ├── register/page.tsx
-│   │   │   └── dashboard/page.tsx
-│   │   ├── components/ui/
-│   │   └── lib/
-│   │       ├── api.ts
-│   │       └── auth.ts
-│   └── public/
-├── package.json
-└── READMe.md
+# Generate coverage report
+npm run test:coverage
 ```
 
-## Production Deployment
+**Key Test Files:**
+*   `backend/tests/parser.test.ts`: Validates regex parsing logic
+*   `backend/tests/isolation.test.ts`: Tests transaction list API response structure
 
-### Backend (Render or similar)
+## 📂 Project Structure
 
-Service settings (`Root Directory`: `backend`):
+```
+.
+├── backend/
+│   ├── prisma/             # Database schema & migrations
+│   ├── src/
+│   │   ├── lib/            # Shared utilities (Auth, DB, Parser)
+│   │   ├── middleware/     # Auth middleware
+│   │   ├── routes/         # API Route definitions
+│   │   └── index.ts        # App entry point
+│   └── tests/              # Jest test suites
+│
+├── frontend/
+│   ├── src/
+│   │   ├── app/            # Next.js App Router pages
+│   │   ├── components/     # Reusable UI components
+│   │   └── lib/            # API client & helpers
+│   └── public/             # Static assets
+│
+└── README.md
+```
 
-- Build command: `npm install && npx prisma generate && npx prisma db push && npm run build`
-- Start command: `npm start`
-- Required env:
-  - `DATABASE_URL` (MongoDB production URI)
-  - `BETTER_AUTH_SECRET` (and/or `AUTH_SECRET`)
-  - `BACKEND_URL` (your deployed backend URL)
-  - `FRONTEND_URL` (your deployed frontend URL)
-  - `NODE_ENV=production`
+## 📸 Screenshots
 
-### Frontend (Vercel)
+| Dashboard View | Transaction Parsing |
+|:---:|:---:|
+| ![Dashboard Mockup](assets/dashboard.png) | ![Parsing Demo](assets/parsing.png) |
 
-Project settings:
-
-- Root Directory: `frontend`
-- Required env:
-  - `NEXT_PUBLIC_BACKEND_URL=<your backend url>`
-
-## Notes
-
-- Prisma datasource provider is currently MongoDB.
-- Backend CORS and Better Auth trusted origins include localhost and configured frontend URL.
-- If you rotate secrets or move databases, existing sessions/tokens may be invalidated.
+---
+*Built for Vessify Internship Assignment*
