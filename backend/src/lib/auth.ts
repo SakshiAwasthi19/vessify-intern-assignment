@@ -29,7 +29,7 @@ logToFile(logMsg);
 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
-        provider: "postgresql",
+        provider: "mongodb",
     }),
 
     // Email + Password Authentication

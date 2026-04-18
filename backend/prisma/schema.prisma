@@ -3,12 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id            String   @id
+  id            String   @id @map("_id")
   email         String   @unique
   emailVerified Boolean  @default(false)
   name          String?
@@ -25,7 +25,7 @@ model User {
 }
 
 model Session {
-  id        String   @id
+  id        String   @id @map("_id")
   userId    String
   token     String   @unique
   expiresAt DateTime
@@ -36,13 +36,12 @@ model Session {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([token])
   @@index([userId])
   @@map("sessions")
 }
 
 model Account {
-  id           String    @id
+  id           String    @id @map("_id")
   userId       String
   accountId    String
   providerId   String
@@ -62,7 +61,7 @@ model Account {
 }
 
 model Verification {
-  id         String   @id
+  id         String   @id @map("_id")
   identifier String
   value      String
   expiresAt  DateTime
@@ -73,21 +72,21 @@ model Verification {
 }
 
 model Organization {
-  id        String   @id
+  id        String   @id @map("_id")
   name      String
-  slug      String?  @unique
+  slug      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   members      OrganizationMember[]
   transactions Transaction[]
 
-  @@index([slug])
+  @@unique([slug])
   @@map("organizations")
 }
 
 model OrganizationMember {
-  id             String   @id
+  id             String   @id @map("_id")
   userId         String
   organizationId String
   role           String   @default("member")
@@ -102,7 +101,7 @@ model OrganizationMember {
 }
 
 model Invitation {
-  id             String   @id
+  id             String   @id @map("_id")
   organizationId String
   email          String
   role           String?
@@ -116,7 +115,7 @@ model Invitation {
 }
 
 model Jwks {
-  id         String   @id
+  id         String   @id @map("_id")
   publicKey  String
   privateKey String
   createdAt  DateTime @default(now())
@@ -125,13 +124,13 @@ model Jwks {
 }
 
 model Transaction {
-  id             String   @id @default(cuid())
+  id             String   @id @default(cuid()) @map("_id")
   userId         String
   organizationId String
   date           DateTime
   description    String
-  amount         Decimal  @db.Decimal(10, 2)
-  balance        Decimal  @db.Decimal(10, 2)
+  amount         Float
+  balance        Float
   rawText        String?
   createdAt      DateTime @default(now())
 
